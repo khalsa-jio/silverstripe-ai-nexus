@@ -1,6 +1,6 @@
 {
-    "name": "silverstripe-module/skeleton",
-    "description": "A skeleton for Silverstripe CMS modules.",
+    "name": "khalsa-jio/silverstripe-ai-nexus",
+    "description": "This module can be used as a bridge between a SilverStripe application and LLM providers.",
     "type": "silverstripe-vendormodule",
     "keywords": [
         "silverstripe",
