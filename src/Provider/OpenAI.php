@@ -30,11 +30,11 @@ class OpenAI extends AbstractLLMClient
 
     protected function extractContent(array $response): string
     {
-        return trim($result['output'][0]['content'][0]['text'] ?? '');
+        return trim($response['output'][0]['content'][0]['text'] ?? '');
     }
 
     protected function extractUsage(array $response): array
     {
-        return $result['usage'] ?? [];
+        return $response['usage'] ?? [];
     }
 }

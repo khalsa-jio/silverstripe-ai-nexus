@@ -55,7 +55,7 @@ abstract class AbstractLLMClient implements LLMClientInterface
 
     public function initiate(): void
     {
-        $baseUrl = $this->apiUrl . '/' . $this->getApiVersion();
+        $baseUrl = $this->apiUrl . DIRECTORY_SEPARATOR . $this->getApiVersion() . DIRECTORY_SEPARATOR;
 
         $this->client = new Client([
             'base_uri' => $baseUrl,

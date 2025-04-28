@@ -53,8 +53,8 @@ class Claude extends AbstractLLMClient
     protected function extractUsage(array $response): array
     {
         return [
-            'input_tokens' => $result['usage']['input_tokens'] ?? 0,
-            'output_tokens' => $result['usage']['output_tokens'] ?? 0
+            'input_tokens' => $response['usage']['input_tokens'] ?? 0,
+            'output_tokens' => $response['usage']['output_tokens'] ?? 0
         ];
     }
 }
