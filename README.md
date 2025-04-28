@@ -27,7 +27,7 @@ You can configure the module using YAML file. Either create a new YAML file in y
 Name: ai-nexus
 ---
 
-KhalsaJio\AltGenerator\LLMClient:
+KhalsaJio\AI\Nexus\LLMClient:
   default_client: KhalsaJio\AI\Nexus\Provider\OpenAI # or "KhalsaJio\AI\Nexus\Provider\Claude" - The default LLM client to use - required
 
 SilverStripe\Core\Injector\Injector:
