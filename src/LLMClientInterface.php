@@ -47,5 +47,5 @@ interface LLMClientInterface
      * @throws \InvalidArgumentException
      * @return array
      */
-    public function chat(array $payload,string $endpoint);
+    public function chat(array $payload, string $endpoint);
 }

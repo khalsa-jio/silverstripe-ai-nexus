@@ -36,5 +36,10 @@
             "phpstan/extension-installer": true,
             "silverstripe/vendor-plugin": true
         }
+    },
+    "scripts": {
+        "phpcs": "phpcs src --extensions=php",
+        "phpcbf": "phpcbf src --extensions=php",
+        "phpcs-fix": "@phpcbf"
     }
 }

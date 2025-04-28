@@ -10,13 +10,13 @@ class Claude extends AbstractLLMClient
      * API URL for Anthropic Claude API
      * @var string
      */
-    protected $apiUrl = 'https://api.anthropic.com';
+    protected string $apiUrl = 'https://api.anthropic.com';
 
     /**
      * API version
      * @var string
      */
-    protected $apiVersion = 'v1';
+    protected string $apiVersion = 'v1';
 
     /**
      * Get the default model to use
