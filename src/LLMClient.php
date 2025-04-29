@@ -57,7 +57,7 @@ class LLMClient
     public function initiate($client_class = null, $model = null)
     {
         // Get client class from parameter, config, or default
-        $client_class = $client_class ?: LLMClient::config()->get('default_client');
+        $client_class = $client_class ?: self::default_client();
 
         if (!$client_class) {
             $this->logError('No LLM client configured');
@@ -139,6 +139,16 @@ class LLMClient
     {
         $client = $this->getLLMClient();
         return $client ? $client->validate() : false;
+    }
+
+    /**
+     * Get the default LLM client
+     *
+     * @return LLMClientInterface|null
+     */
+    public static function default_client()
+    {
+        return self::config()->get(name: 'default_client');
     }
 
     public function __call($method, $arguments)

@@ -8,6 +8,9 @@ use GuzzleHttp\RequestOptions;
 use SilverStripe\Core\Injector\Injector;
 use KhalsaJio\AI\Nexus\LLMClientInterface;
 
+/**
+ * Abstract class for LLM clients
+ */
 abstract class AbstractLLMClient implements LLMClientInterface
 {
     /**
