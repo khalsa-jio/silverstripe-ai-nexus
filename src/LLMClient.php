@@ -146,7 +146,7 @@ class LLMClient
      *
      * @return LLMClientInterface|null
      */
-    public static function default_client()
+    public static function getDefaultClient()
     {
         return self::config()->get(name: 'default_client');
     }
