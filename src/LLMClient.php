@@ -57,7 +57,7 @@ class LLMClient
     public function initiate($client_class = null, $model = null)
     {
         // Get client class from parameter, config, or default
-        $client_class = $client_class ?: LLMClient::default_client();
+        $client_class = $client_class ?: LLMClient::getDefaultClient();
 
         if (!$client_class) {
             $this->logError('No LLM client configured');
