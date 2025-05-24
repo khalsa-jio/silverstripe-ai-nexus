@@ -4,22 +4,24 @@ namespace KhalsaJio\AI\Nexus\Provider;
 
 use KhalsaJio\AI\Nexus\Provider\AbstractLLMClient;
 
-class OpenAI extends AbstractLLMClient
+class DeepSeek extends AbstractLLMClient
 {
     /**
      * API URL for OpenAI API
      * @var string
      */
-    protected string $apiUrl = 'https://api.openai.com';
+    protected string $apiUrl = 'https://api.deepseek.com';
+
+    protected string $apiVersion = 'chat';
 
     protected function getDefaultModel(): string
     {
-        return 'gpt-4o-mini-2024-07-18';
+        return 'deepseek-chat';
     }
 
     protected function extractContent(array $response): string
     {
-        return trim($response['output'][0]['content'][0]['text'] ?? '');
+        return trim($response['choices'][0]['message']['content'] ?? '');
     }
 
     protected function extractUsage(array $response): array

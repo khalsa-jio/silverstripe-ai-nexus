@@ -56,6 +56,11 @@ abstract class AbstractLLMClient implements LLMClientInterface
 
     abstract protected function getDefaultModel(): string;
 
+    public static function getClientName(): string
+    {
+        return strtolower((new \ReflectionClass(static::class))->getShortName());
+    }
+
     public function initiate(): void
     {
         $baseUrl = $this->apiUrl . DIRECTORY_SEPARATOR . $this->getApiVersion() . DIRECTORY_SEPARATOR;

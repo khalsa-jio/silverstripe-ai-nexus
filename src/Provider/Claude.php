@@ -13,12 +13,6 @@ class Claude extends AbstractLLMClient
     protected string $apiUrl = 'https://api.anthropic.com';
 
     /**
-     * API version
-     * @var string
-     */
-    protected string $apiVersion = 'v1';
-
-    /**
      * Get the default model to use
      *
      * @return string
@@ -26,15 +20,6 @@ class Claude extends AbstractLLMClient
     protected function getDefaultModel(): string
     {
         return 'claude-3-haiku-20240307';
-    }
-
-    /**
-     * Client name
-     * @return string
-     */
-    public static function getClientName(): string
-    {
-        return 'Claude';
     }
 
     public function getRequestHeaders(): array
