@@ -12,7 +12,7 @@ class TestUtil
 {
     /**
      * Test connection to the LLM provider
-     * 
+     *
      * @param bool $verbose Whether to output detailed information
      * @return bool True if connection is successful
      */
@@ -57,10 +57,10 @@ class TestUtil
             return false;
         }
     }
-    
+
     /**
      * Test streaming connection
-     * 
+     *
      * @param bool $verbose Whether to output detailed information
      * @return bool True if streaming is successful
      */
@@ -69,7 +69,7 @@ class TestUtil
         try {
             $client = LLMClient::create();
             $success = true;
-            
+
             if ($verbose) {
                 echo "Testing streaming with provider: " . $client->getClientName() . "\n";
             }
@@ -114,10 +114,10 @@ class TestUtil
             return false;
         }
     }
-    
+
     /**
      * Print diagnostic information
-     * 
+     *
      * @return void
      */
     public static function printDiagnostics(): void

@@ -35,12 +35,12 @@ interface LLMClientInterface
      * Get the API key for the client
      */
     public function getApiKey(): string;
-    
+
     /**
      * Set maximum number of tokens for this request
      */
     public function setMaxTokens(int $maxTokens): void;
-    
+
     /**
      * Get maximum number of tokens
      */
@@ -60,7 +60,7 @@ interface LLMClientInterface
      * @return array
      */
     public function chat(array $payload, string $endpoint);
-    
+
     /**
      * Stream API responses for long-running requests
      * @param array $payload

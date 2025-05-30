@@ -23,13 +23,13 @@ class CacheManager
      * Default TTL for cached responses in seconds (1 hour)
      */
     private const DEFAULT_TTL = 3600;
-    
+
     /**
      * @config
      * @var int Default TTL value from configuration
      */
     private static $default_ttl = 3600;
-    
+
     /**
      * @config
      * @var bool Whether caching is globally enabled
@@ -63,19 +63,19 @@ class CacheManager
      * ```
      */
     private static $endpoint_settings = [];
-    
+
     /**
      * @config
      * @var bool Whether to track cache statistics
      */
     private static $enable_statistics = false;
-    
+
     /**
      * @config
      * @var string Cache statistics key
      */
     private static $statistics_key = 'LLMCacheStats';
-    
+
     /**
      * @config
      * @var int Maximum age for cache items in seconds (default 30 days)
@@ -84,7 +84,7 @@ class CacheManager
 
     /**
      * Get the cache instance
-     * 
+     *
      * @return \Psr\SimpleCache\CacheInterface
      */
     private static function getCache()
@@ -95,7 +95,7 @@ class CacheManager
 
     /**
      * Get the statistics cache instance
-     * 
+     *
      * @return \Psr\SimpleCache\CacheInterface
      */
     private static function getStatsCache()
@@ -107,7 +107,7 @@ class CacheManager
 
     /**
      * Generate a cache key for a specific request
-     * 
+     *
      * @param array $payload Request payload
      * @param string $endpoint API endpoint
      * @param string $provider Provider name
@@ -118,14 +118,14 @@ class CacheManager
         // Remove any streaming flags as they don't affect content
         $normalizedPayload = $payload;
         unset($normalizedPayload['stream']);
-        
+
         // Sort to ensure consistent keys regardless of array order
         if (isset($normalizedPayload['messages'])) {
             usort($normalizedPayload['messages'], function ($a, $b) {
                 return strcmp($a['role'] . $a['content'], $b['role'] . $b['content']);
             });
         }
-        
+
         // Create a stable string representation of the request
         $key = $provider . '_' . $endpoint . '_' . md5(json_encode($normalizedPayload));
         return $key;
@@ -133,7 +133,7 @@ class CacheManager
 
     /**
      * Cache a response
-     * 
+     *
      * @param array $payload Original request payload
      * @param string $endpoint API endpoint
      * @param string $provider Provider name
@@ -142,10 +142,10 @@ class CacheManager
      * @return bool Success
      */
     public static function cacheResponse(
-        array $payload, 
-        string $endpoint, 
-        string $provider, 
-        $response, 
+        array $payload,
+        string $endpoint,
+        string $provider,
+        $response,
         ?int $ttl = null
     ): bool {
         // Check if caching is enabled
@@ -156,7 +156,7 @@ class CacheManager
         $key = self::generateCacheKey($payload, $endpoint, $provider);
         // Use provider or endpoint specific TTL if available
         $ttl = $ttl ?? self::getTTL($provider, $endpoint);
-        
+
         try {
             $cache = self::getCache();
             $result = $cache->set($key, [
@@ -166,7 +166,7 @@ class CacheManager
                 'provider' => $provider,
                 'endpoint' => $endpoint
             ], $ttl);
-            
+
             // Update statistics if enabled
             if (self::isStatisticsEnabled()) {
                 self::updateCacheStats('hit', $provider, $endpoint);
@@ -180,7 +180,7 @@ class CacheManager
 
     /**
      * Get a cached response if available
-     * 
+     *
      * @param array $payload Request payload
      * @param string $endpoint API endpoint
      * @param string $provider Provider name
@@ -198,7 +198,7 @@ class CacheManager
             $cache = self::getCache();
             if ($cache->has($key)) {
                 $cacheData = $cache->get($key);
-                
+
                 if (is_array($cacheData) && isset($cacheData['response'])) {
                     if (self::isStatisticsEnabled()) {
                         self::updateCacheStats('hit', $provider, $endpoint);
@@ -227,7 +227,7 @@ class CacheManager
 
     /**
      * Clear all cached responses
-     * 
+     *
      * @return bool Success
      */
     public static function clearCache(): bool
@@ -246,10 +246,10 @@ class CacheManager
             return false;
         }
     }
-    
+
     /**
      * Check if a response is cached
-     * 
+     *
      * @param array $payload Request payload
      * @param string $endpoint API endpoint
      * @param string $provider Provider name
@@ -270,7 +270,7 @@ class CacheManager
             return false;
         }
     }
-    
+
     /**
      * Check if caching is enabled in configuration
      * Takes into account provider and endpoint specific settings
@@ -297,9 +297,11 @@ class CacheManager
         if ($provider !== null) {
             $providerSettings = Config::inst()->get(self::class, 'provider_settings') ?? [];
             $providerKey = strtolower($provider);
-            
-            if (isset($providerSettings[$providerKey]) && 
-                isset($providerSettings[$providerKey]['enable_caching'])) {
+
+            if (
+                isset($providerSettings[$providerKey]) &&
+                isset($providerSettings[$providerKey]['enable_caching'])
+            ) {
                 if ($providerSettings[$providerKey]['enable_caching'] === false) {
                     return false;
                 }
@@ -309,9 +311,11 @@ class CacheManager
         // Check endpoint-specific settings
         if ($endpoint !== null) {
             $endpointSettings = Config::inst()->get(self::class, 'endpoint_settings') ?? [];
-            
-            if (isset($endpointSettings[$endpoint]) && 
-                isset($endpointSettings[$endpoint]['enable_caching'])) {
+
+            if (
+                isset($endpointSettings[$endpoint]) &&
+                isset($endpointSettings[$endpoint]['enable_caching'])
+            ) {
                 if ($endpointSettings[$endpoint]['enable_caching'] === false) {
                     return false;
                 }
@@ -321,10 +325,10 @@ class CacheManager
         // If we've made it here, caching is enabled
         return true;
     }
-    
+
     /**
      * Get the TTL for a specific provider and endpoint
-     * 
+     *
      * @param string|null $provider Provider name
      * @param string|null $endpoint API endpoint
      * @return int TTL in seconds
@@ -338,9 +342,11 @@ class CacheManager
         if ($provider !== null) {
             $providerSettings = Config::inst()->get(self::class, 'provider_settings') ?? [];
             $providerKey = strtolower($provider);
-            
-            if (isset($providerSettings[$providerKey]) && 
-                isset($providerSettings[$providerKey]['ttl'])) {
+
+            if (
+                isset($providerSettings[$providerKey]) &&
+                isset($providerSettings[$providerKey]['ttl'])
+            ) {
                 $ttl = $providerSettings[$providerKey]['ttl'];
             }
         }
@@ -348,19 +354,21 @@ class CacheManager
         // Check endpoint-specific settings (overrides provider settings)
         if ($endpoint !== null) {
             $endpointSettings = Config::inst()->get(self::class, 'endpoint_settings') ?? [];
-            
-            if (isset($endpointSettings[$endpoint]) && 
-                isset($endpointSettings[$endpoint]['ttl'])) {
+
+            if (
+                isset($endpointSettings[$endpoint]) &&
+                isset($endpointSettings[$endpoint]['ttl'])
+            ) {
                 $ttl = $endpointSettings[$endpoint]['ttl'];
             }
         }
-        
+
         return (int)$ttl;
     }
 
     /**
      * Check if statistics tracking is enabled
-     * 
+     *
      * @return bool
      */
     public static function isStatisticsEnabled(): bool
@@ -370,7 +378,7 @@ class CacheManager
 
     /**
      * Update cache statistics
-     * 
+     *
      * @param string $type Type of stat (hit, miss)
      * @param string|null $provider Provider name
      * @param string|null $endpoint API endpoint
@@ -397,7 +405,7 @@ class CacheManager
             } elseif ($type === 'miss') {
                 $stats['misses']++;
             }
-            
+
             // Update provider stats
             if ($provider !== null) {
                 $providerKey = strtolower($provider);
@@ -434,7 +442,7 @@ class CacheManager
 
     /**
      * Get cache statistics
-     * 
+     *
      * @return array Cache statistics
      */
     public static function getStatistics(): array
@@ -442,7 +450,7 @@ class CacheManager
         if (!self::isStatisticsEnabled()) {
             return ['enabled' => false];
         }
-        
+
         try {
             $statsCache = self::getStatsCache();
             $stats = $statsCache->get('stats') ?? [
@@ -451,11 +459,11 @@ class CacheManager
                 'providers' => [],
                 'endpoints' => []
             ];
-            
+
             // Calculate hit rate
             $total = $stats['hits'] + $stats['misses'];
             $hitRate = $total > 0 ? ($stats['hits'] / $total) * 100 : 0;
-            
+
             return [
                 'enabled' => true,
                 'hits' => $stats['hits'],
@@ -473,7 +481,7 @@ class CacheManager
 
     /**
      * Reset cache statistics
-     * 
+     *
      * @return bool Success
      */
     public static function resetStatistics(): bool

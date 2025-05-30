@@ -116,12 +116,12 @@ abstract class AbstractLLMClient implements LLMClientInterface
     {
         $this->apiVersion = $api_version;
     }
-    
+
     public function setMaxTokens(int $maxTokens): void
     {
         $this->maxTokens = $maxTokens;
     }
-    
+
     public function getMaxTokens(): int
     {
         return $this->maxTokens;
@@ -275,7 +275,7 @@ abstract class AbstractLLMClient implements LLMClientInterface
 
             // Process the stream
             $body = $response->getBody();
-            
+
             // Track token usage if available
             $usageData = [];
 
@@ -295,7 +295,7 @@ abstract class AbstractLLMClient implements LLMClientInterface
                         $data = json_decode($jsonData, true);
                         if (json_last_error() === JSON_ERROR_NONE) {
                             $handler->handleChunk($data, static::getClientName(), $this->model);
-                            
+
                             // Collect usage data if present
                             if (!empty($data['usage'])) {
                                 $usageData = $this->extractUsage($data);
@@ -309,10 +309,9 @@ abstract class AbstractLLMClient implements LLMClientInterface
                     }
                 }
             }
-            
+
             // Call completion handler with usage data
             $handler->complete($usageData);
-
         } catch (RequestException $e) {
             $handler->handleError($e);
             if ($this->logger) {
@@ -325,7 +324,7 @@ abstract class AbstractLLMClient implements LLMClientInterface
             }
         }
     }
-    
+
     /**
      * Helper method to read a line from a stream
      *

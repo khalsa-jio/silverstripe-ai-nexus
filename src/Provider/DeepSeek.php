@@ -27,10 +27,10 @@ class DeepSeek extends AbstractLLMClient
     {
         return 'deepseek-chat';
     }
-    
+
     /**
      * Get client name
-     * 
+     *
      * @return string
      */
     public static function getClientName(): string
