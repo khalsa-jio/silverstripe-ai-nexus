@@ -2,6 +2,8 @@
 
 namespace KhalsaJio\AI\Nexus;
 
+use KhalsaJio\AI\Nexus\Provider\StreamResponseHandler;
+
 interface LLMClientInterface
 {
     /**
@@ -33,6 +35,16 @@ interface LLMClientInterface
      * Get the API key for the client
      */
     public function getApiKey(): string;
+    
+    /**
+     * Set maximum number of tokens for this request
+     */
+    public function setMaxTokens(int $maxTokens): void;
+    
+    /**
+     * Get maximum number of tokens
+     */
+    public function getMaxTokens(): int;
 
     /**
      * Validate client configuration
@@ -48,4 +60,15 @@ interface LLMClientInterface
      * @return array
      */
     public function chat(array $payload, string $endpoint);
+    
+    /**
+     * Stream API responses for long-running requests
+     * @param array $payload
+     * @param string $endpoint
+     * @param StreamResponseHandler $handler Handler for stream events
+     * @throws \RuntimeException
+     * @throws \InvalidArgumentException
+     * @return void
+     */
+    public function streamChat(array $payload, string $endpoint, StreamResponseHandler $handler);
 }

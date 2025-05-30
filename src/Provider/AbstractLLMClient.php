@@ -5,7 +5,10 @@ namespace KhalsaJio\AI\Nexus\Provider;
 use GuzzleHttp\Client;
 use Psr\Log\LoggerInterface;
 use GuzzleHttp\RequestOptions;
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Exception\RequestException;
 use SilverStripe\Core\Injector\Injector;
+use KhalsaJio\AI\Nexus\Util\CacheManager;
 use KhalsaJio\AI\Nexus\LLMClientInterface;
 
 /**
@@ -37,6 +40,11 @@ abstract class AbstractLLMClient implements LLMClientInterface
      * @var string
      */
     protected string $apiVersion = 'v1';
+
+    /**
+     * @var int Maximum number of tokens to generate
+     */
+    protected int $maxTokens = 1024;
 
     /**
      * @var string
@@ -108,6 +116,16 @@ abstract class AbstractLLMClient implements LLMClientInterface
     {
         $this->apiVersion = $api_version;
     }
+    
+    public function setMaxTokens(int $maxTokens): void
+    {
+        $this->maxTokens = $maxTokens;
+    }
+    
+    public function getMaxTokens(): int
+    {
+        return $this->maxTokens;
+    }
 
     public function validate(): bool
     {
@@ -121,9 +139,10 @@ abstract class AbstractLLMClient implements LLMClientInterface
      * This is a wildcard method to handle any API call
      * @param array $payload
      * @param string $endpoint
+     * @param bool $useCache Whether to use the cache (default true)
      * @return array
      */
-    public function chat(array $payload, string $endpoint)
+    public function chat(array $payload, string $endpoint, bool $useCache = true)
     {
         if (empty($this->client)) {
             return $this->formatError(new \RuntimeException('Client not initialized'));
@@ -137,6 +156,17 @@ abstract class AbstractLLMClient implements LLMClientInterface
             $payload['model'] = $this->getModel();
         }
 
+        // Check cache first if caching is enabled
+        if ($useCache && !isset($payload['stream'])) {
+            $cachedResponse = CacheManager::getCachedResponse($payload, $endpoint, static::getClientName());
+            if ($cachedResponse !== null) {
+                if ($this->logger) {
+                    $this->logger->debug(static::getClientName() . ' API: Using cached response');
+                }
+                return $cachedResponse;
+            }
+        }
+
         try {
             $response = $this->client->post($endpoint, [
                 RequestOptions::JSON => $payload
@@ -148,7 +178,14 @@ abstract class AbstractLLMClient implements LLMClientInterface
                 throw new \RuntimeException('API error: ' . $result['error']['message']);
             }
 
-            return $this->formatResponse($result);
+            $formattedResponse = $this->formatResponse($result);
+
+            // Cache the response if appropriate
+            if ($useCache && !isset($payload['stream'])) {
+                CacheManager::cacheResponse($payload, $endpoint, static::getClientName(), $formattedResponse);
+            }
+
+            return $formattedResponse;
         } catch (\Exception $e) {
             if ($this->logger) {
                 $this->logger->error(static::getClientName() . ' API error: ' . $e->getMessage());
@@ -191,4 +228,120 @@ abstract class AbstractLLMClient implements LLMClientInterface
     abstract protected function extractContent(array $response): string;
 
     abstract protected function extractUsage(array $response): array;
+
+    /**
+     * Stream API responses for long-running requests
+     * @param array $payload
+     * @param string $endpoint
+     * @param StreamResponseHandler $handler Handler for stream events
+     * @throws \RuntimeException
+     * @throws \InvalidArgumentException
+     * @return void
+     */
+    public function streamChat(array $payload, string $endpoint, StreamResponseHandler $handler)
+    {
+        if (empty($this->client)) {
+            $handler->handleError(new \RuntimeException('Client not initialized'));
+            return;
+        }
+
+        if (empty($endpoint)) {
+            $handler->handleError(new \InvalidArgumentException('Endpoint is required'));
+            return;
+        }
+
+        // Set model if not provided
+        if (!isset($payload['model'])) {
+            $payload['model'] = $this->getModel();
+        }
+
+        // Set streaming flag for the API
+        $payload['stream'] = true;
+
+        try {
+            $response = $this->client->post($endpoint, [
+                RequestOptions::JSON => $payload,
+                RequestOptions::STREAM => true,
+                RequestOptions::ON_HEADERS => function (Response $response) {
+                    // Check if the response status code is not successful
+                    if ($response->getStatusCode() != 200) {
+                        throw new \RuntimeException(
+                            'Stream request failed with status code: ' . $response->getStatusCode()
+                        );
+                    }
+                },
+                'decode_content' => true,
+            ]);
+
+            // Process the stream
+            $body = $response->getBody();
+            
+            // Track token usage if available
+            $usageData = [];
+
+            while (!$body->eof()) {
+                $line = trim($this->readLine($body));
+                if (!$line || $line === 'data: [DONE]') {
+                    continue;
+                }
+
+                if (strpos($line, 'data:') === 0) {
+                    $jsonData = trim(substr($line, 5));
+                    if (empty($jsonData)) {
+                        continue;
+                    }
+
+                    try {
+                        $data = json_decode($jsonData, true);
+                        if (json_last_error() === JSON_ERROR_NONE) {
+                            $handler->handleChunk($data, static::getClientName(), $this->model);
+                            
+                            // Collect usage data if present
+                            if (!empty($data['usage'])) {
+                                $usageData = $this->extractUsage($data);
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        if ($this->logger) {
+                            $this->logger->error('Error processing stream chunk: ' . $e->getMessage());
+                        }
+                        continue;
+                    }
+                }
+            }
+            
+            // Call completion handler with usage data
+            $handler->complete($usageData);
+
+        } catch (RequestException $e) {
+            $handler->handleError($e);
+            if ($this->logger) {
+                $this->logger->error(static::getClientName() . ' Streaming API error: ' . $e->getMessage());
+            }
+        } catch (\Exception $e) {
+            $handler->handleError($e);
+            if ($this->logger) {
+                $this->logger->error(static::getClientName() . ' Streaming API error: ' . $e->getMessage());
+            }
+        }
+    }
+    
+    /**
+     * Helper method to read a line from a stream
+     *
+     * @param \Psr\Http\Message\StreamInterface $stream
+     * @return string
+     */
+    protected function readLine($stream): string
+    {
+        $buffer = '';
+        while (!$stream->eof()) {
+            $byte = $stream->read(1);
+            if ($byte === "\n" || $byte === "\r") {
+                break;
+            }
+            $buffer .= $byte;
+        }
+        return $buffer;
+    }
 }
