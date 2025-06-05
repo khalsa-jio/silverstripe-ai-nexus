@@ -71,15 +71,32 @@ class DefaultStreamResponseHandler implements StreamResponseHandler
      */
     protected function extractTextFromChunk($chunk, string $provider): string
     {
+        $provider = strtolower($provider);
+
         // Default implementation for common providers
         switch ($provider) {
-            case 'OpenAI':
+            case 'openai':
                 // REF: https://platform.openai.com/docs/guides/streaming-responses?api-mode=chat#advanced-use-cases
                 return $chunk['choices'][0]['delta']['content'] ?? '';
-            case 'Claude':
-                // REF: https://docs.anthropic.com/claude/reference/streaming
-                return $chunk['delta']['text'] ?? '';
-            case 'DeepSeek':
+            case 'claude':
+                if (isset($chunk['completion'])) {
+                    return $chunk['completion'];
+                }
+
+                if (isset($chunk['delta']['text'])) {
+                    return $chunk['delta']['text'];
+                }
+
+                if (isset($chunk['content'])) {
+                    return $chunk['content'];
+                }
+
+                if (isset($chunk['choices'][0]['delta']['content'])) {
+                    return $chunk['choices'][0]['delta']['content'];
+                }
+
+                return '';
+            case 'deepseek':
                 // DeepSeek uses a format similar to OpenAI
                 return $chunk['choices'][0]['delta']['content'] ?? '';
             default:
