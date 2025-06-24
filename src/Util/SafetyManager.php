@@ -25,7 +25,8 @@ class SafetyManager
      * @var array
      */
     private static array $contentWarningPatterns = [
-        'harmful_content' => '/\b(how to (hack|steal|attack)|instructions for (creating|building) (weapons|bombs|poisons))/i',
+        'harmful_content' =>
+            '/\b(how to (hack|steal|attack)|instructions for (creating|building) (weapons|bombs|poisons))/i',
         'personal_data' => '/\b((credit card|social security|passport) number|password|address|phone number)\b/i',
         'hate_speech' => '/\b(racial slurs|hate speech|offensive content)\b/i'
     ];

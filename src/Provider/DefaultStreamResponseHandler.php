@@ -35,11 +35,14 @@ class DefaultStreamResponseHandler implements StreamResponseHandler
      * @param callable|null $completeCallback Callback function when stream completes
      * @param callable|null $errorCallback Callback function when error occurs
      */
-    public function __construct(?callable $chunkCallback = null, ?callable $completeCallback = null, ?callable $errorCallback = null)
-    {
-        $this->chunkCallback = $chunkCallback;
-        $this->completeCallback = $completeCallback;
-        $this->errorCallback = $errorCallback;
+    public function __construct(
+        ?callable $chunkCallback = null,
+        ?callable $completeCallback = null,
+        ?callable $errorCallback = null
+    ) {
+            $this->chunkCallback = $chunkCallback;
+            $this->completeCallback = $completeCallback;
+            $this->errorCallback = $errorCallback;
     }
 
     /**

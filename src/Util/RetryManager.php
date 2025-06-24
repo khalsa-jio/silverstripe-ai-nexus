@@ -77,7 +77,8 @@ class RetryManager
      * @param int $maxRetries Maximum number of retry attempts (null to use config value)
      * @param int $initialBackoff Initial backoff time in milliseconds (null to use config value)
      * @param float $backoffMultiplier Multiplier for subsequent backoff times (null to use config value)
-     * @param array $retryableErrors Array of error types/messages that should trigger a retry (null to use config value)
+     * @param array $retryableErrors Array of error types/messages that should trigger
+     *   a retry (null to use config value)
      * @return mixed Result of the successful API call
      * @throws Exception If all retry attempts fail
      */
@@ -102,7 +103,9 @@ class RetryManager
                 $result = $apiCall();
 
                 if (is_array($result) && isset($result['error']) && !empty($result['error'])) {
-                    $errorMessage = is_array($result['error']) ? ($result['error']['message'] ?? 'Unknown error') : $result['error'];
+                    $errorMessage = is_array($result['error'])
+                        ? ($result['error']['message'] ?? 'Unknown error')
+                        : $result['error'];
                     $errorType = is_array($result['error']) ? ($result['error']['type'] ?? 'unknown') : 'unknown';
 
                     if (!in_array($errorType, $retryableErrors)) {
