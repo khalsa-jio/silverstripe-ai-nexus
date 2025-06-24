@@ -9,6 +9,7 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Exception\RequestException;
 use SilverStripe\Core\Injector\Injector;
 use KhalsaJio\AI\Nexus\Util\CacheManager;
+use KhalsaJio\AI\Nexus\Util\RetryManager;
 use KhalsaJio\AI\Nexus\LLMClientInterface;
 
 /**
@@ -342,5 +343,70 @@ abstract class AbstractLLMClient implements LLMClientInterface
             $buffer .= $byte;
         }
         return $buffer;
+    }
+
+    /**
+     * Makes an API call with retry logic and exponential backoff
+     *
+     * @param array $payload
+     * @param string $endpoint
+     * @param bool $useCache Whether to use the cache (default true)
+     * @param int $maxRetries Maximum number of retry attempts (null to use config value)
+     * @param int $initialBackoff Initial backoff time in milliseconds (null to use config value)
+     * @param float $backoffMultiplier Multiplier for subsequent backoff times (null to use config value)
+     * @return array
+     * @throws \Exception If all retry attempts fail
+     */
+    public function chatWithRetry(
+        array $payload,
+        string $endpoint,
+        bool $useCache = true,
+        int $maxRetries = null,
+        int $initialBackoff = null,
+        float $backoffMultiplier = null
+    ) {
+        $retryManager = Injector::inst()->get(RetryManager::class);
+
+        return $retryManager->executeWithRetry(
+            function() use ($payload, $endpoint, $useCache) {
+                return $this->chat($payload, $endpoint, $useCache);
+            },
+            $maxRetries,
+            $initialBackoff,
+            $backoffMultiplier
+        );
+    }
+
+    /**
+     * Stream API responses with retry logic and exponential backoff
+     *
+     * @param array $payload
+     * @param string $endpoint
+     * @param StreamResponseHandler $handler Handler for stream events
+     * @param int $maxRetries Maximum number of retry attempts (null to use config value)
+     * @param int $initialBackoff Initial backoff time in milliseconds (null to use config value)
+     * @param float $backoffMultiplier Multiplier for subsequent backoff times (null to use config value)
+     * @throws \Exception If all retry attempts fail
+     * @return void
+     */
+    public function streamChatWithRetry(
+        array $payload,
+        string $endpoint,
+        StreamResponseHandler $handler,
+        int $maxRetries = null,
+        int $initialBackoff = null,
+        float $backoffMultiplier = null
+    ) {
+        $retryManager = Injector::inst()->get(RetryManager::class);
+
+        $retryManager->executeWithRetry(
+            function() use ($payload, $endpoint, $handler) {
+                $this->streamChat($payload, $endpoint, $handler);
+                return true; // Return a value for the retry manager
+            },
+            $maxRetries,
+            $initialBackoff,
+            $backoffMultiplier
+        );
     }
 }
