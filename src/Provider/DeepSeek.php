@@ -4,13 +4,19 @@ namespace KhalsaJio\AI\Nexus\Provider;
 
 use KhalsaJio\AI\Nexus\Provider\AbstractLLMClient;
 
-class Claude extends AbstractLLMClient
+class DeepSeek extends AbstractLLMClient
 {
     /**
-     * API URL for Anthropic Claude API
+     * API URL for DeepSeek API
      * @var string
      */
-    protected string $apiUrl = 'https://api.anthropic.com';
+    protected string $apiUrl = 'https://api.deepseek.com';
+
+    /**
+     * API version
+     * @var string
+     */
+    protected string $apiVersion = 'v1';
 
     /**
      * Get the default model to use
@@ -19,16 +25,17 @@ class Claude extends AbstractLLMClient
      */
     protected function getDefaultModel(): string
     {
-        return 'claude-3-haiku-20240307';
+        return 'deepseek-chat';
     }
 
-    public function getRequestHeaders(): array
+    /**
+     * Get client name
+     *
+     * @return string
+     */
+    public static function getClientName(): string
     {
-        return [
-            'x-api-key' => $this->getApiKey(),
-            'Content-Type' => 'application/json',
-            'anthropic-version' => '2023-06-01',
-        ];
+        return 'DeepSeek';
     }
 
     /**
@@ -39,7 +46,7 @@ class Claude extends AbstractLLMClient
      */
     protected function extractContent(array $response): string
     {
-        return trim($response['content'][0]['text'] ?? '');
+        return trim($response['choices'][0]['message']['content'] ?? '');
     }
 
     /**
@@ -51,8 +58,9 @@ class Claude extends AbstractLLMClient
     protected function extractUsage(array $response): array
     {
         return [
-            'input_tokens' => $response['usage']['input_tokens'] ?? 0,
-            'output_tokens' => $response['usage']['output_tokens'] ?? 0
+            'prompt_tokens' => $response['usage']['prompt_tokens'] ?? 0,
+            'completion_tokens' => $response['usage']['completion_tokens'] ?? 0,
+            'total_tokens' => $response['usage']['total_tokens'] ?? 0,
         ];
     }
 }
