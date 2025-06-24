@@ -90,7 +90,7 @@ class CacheManager
     private static function getCache()
     {
         $factory = Injector::inst()->get(CacheFactory::class);
-        return $factory->create(self::CACHE_KEY);
+        return $factory->create(CacheManager::CACHE_KEY);
     }
 
     /**
@@ -101,7 +101,7 @@ class CacheManager
     private static function getStatsCache()
     {
         $factory = Injector::inst()->get(CacheFactory::class);
-        $statsKey = Config::inst()->get(self::class, 'statistics_key') ?? self::CACHE_KEY . '_Stats';
+        $statsKey = Config::inst()->get(CacheManager::class, 'statistics_key') ?? CacheManager::CACHE_KEY . '_Stats';
         return $factory->create($statsKey);
     }
 
@@ -149,16 +149,16 @@ class CacheManager
         ?int $ttl = null
     ): bool {
         // Check if caching is enabled
-        if (!self::isCachingEnabled($provider, $endpoint)) {
+        if (!CacheManager::isCachingEnabled($provider, $endpoint)) {
             return false;
         }
 
-        $key = self::generateCacheKey($payload, $endpoint, $provider);
+        $key = CacheManager::generateCacheKey($payload, $endpoint, $provider);
         // Use provider or endpoint specific TTL if available
-        $ttl = $ttl ?? self::getTTL($provider, $endpoint);
+        $ttl = $ttl ?? CacheManager::getTTL($provider, $endpoint);
 
         try {
-            $cache = self::getCache();
+            $cache = CacheManager::getCache();
             $result = $cache->set($key, [
                 'response' => $response,
                 'created' => time(),
@@ -168,8 +168,8 @@ class CacheManager
             ], $ttl);
 
             // Update statistics if enabled
-            if (self::isStatisticsEnabled()) {
-                self::updateCacheStats('hit', $provider, $endpoint);
+            if (CacheManager::isStatisticsEnabled()) {
+                CacheManager::updateCacheStats('hit', $provider, $endpoint);
             }
 
             return $result;
@@ -188,20 +188,20 @@ class CacheManager
      */
     public static function getCachedResponse(array $payload, string $endpoint, string $provider)
     {
-        if (!self::isCachingEnabled($provider, $endpoint)) {
+        if (!CacheManager::isCachingEnabled($provider, $endpoint)) {
             return null;
         }
 
-        $key = self::generateCacheKey($payload, $endpoint, $provider);
+        $key = CacheManager::generateCacheKey($payload, $endpoint, $provider);
 
         try {
-            $cache = self::getCache();
+            $cache = CacheManager::getCache();
             if ($cache->has($key)) {
                 $cacheData = $cache->get($key);
 
                 if (is_array($cacheData) && isset($cacheData['response'])) {
-                    if (self::isStatisticsEnabled()) {
-                        self::updateCacheStats('hit', $provider, $endpoint);
+                    if (CacheManager::isStatisticsEnabled()) {
+                        CacheManager::updateCacheStats('hit', $provider, $endpoint);
                     }
                     return $cacheData['response'];
                 }
@@ -210,13 +210,13 @@ class CacheManager
             }
 
             // Record cache miss
-            if (self::isStatisticsEnabled()) {
-                self::updateCacheStats('miss', $provider, $endpoint);
+            if (CacheManager::isStatisticsEnabled()) {
+                CacheManager::updateCacheStats('miss', $provider, $endpoint);
             }
         } catch (\Exception $e) {
             // Fail silently
-            if (self::isStatisticsEnabled()) {
-                self::updateCacheStats('miss', $provider, $endpoint);
+            if (CacheManager::isStatisticsEnabled()) {
+                CacheManager::updateCacheStats('miss', $provider, $endpoint);
             }
 
             return null;
@@ -233,11 +233,11 @@ class CacheManager
     public static function clearCache(): bool
     {
         try {
-            $cache = self::getCache();
+            $cache = CacheManager::getCache();
             $result = $cache->clear();
 
-            if (self::isStatisticsEnabled()) {
-                $statsCache = self::getStatsCache();
+            if (CacheManager::isStatisticsEnabled()) {
+                $statsCache = CacheManager::getStatsCache();
                 $statsCache->set('last_clear', time());
             }
 
@@ -257,14 +257,14 @@ class CacheManager
      */
     public static function isCached(array $payload, string $endpoint, string $provider): bool
     {
-        if (!self::isCachingEnabled($provider, $endpoint)) {
+        if (!CacheManager::isCachingEnabled($provider, $endpoint)) {
             return false;
         }
 
-        $key = self::generateCacheKey($payload, $endpoint, $provider);
+        $key = CacheManager::generateCacheKey($payload, $endpoint, $provider);
 
         try {
-            $cache = self::getCache();
+            $cache = CacheManager::getCache();
             return $cache->has($key);
         } catch (\Exception $e) {
             return false;
@@ -282,7 +282,7 @@ class CacheManager
     public static function isCachingEnabled(?string $provider = null, ?string $endpoint = null): bool
     {
         // First check global setting
-        $globalSetting = Config::inst()->get(self::class, 'enable_caching') !== false;
+        $globalSetting = Config::inst()->get(CacheManager::class, 'enable_caching') !== false;
 
         if (!$globalSetting) {
             return false;
@@ -295,7 +295,7 @@ class CacheManager
 
         // Check provider-specific settings
         if ($provider !== null) {
-            $providerSettings = Config::inst()->get(self::class, 'provider_settings') ?? [];
+            $providerSettings = Config::inst()->get(CacheManager::class, 'provider_settings') ?? [];
             $providerKey = strtolower($provider);
 
             if (
@@ -310,7 +310,7 @@ class CacheManager
 
         // Check endpoint-specific settings
         if ($endpoint !== null) {
-            $endpointSettings = Config::inst()->get(self::class, 'endpoint_settings') ?? [];
+            $endpointSettings = Config::inst()->get(CacheManager::class, 'endpoint_settings') ?? [];
 
             if (
                 isset($endpointSettings[$endpoint]) &&
@@ -336,11 +336,11 @@ class CacheManager
     public static function getTTL(?string $provider = null, ?string $endpoint = null): int
     {
         // Start with default TTL
-        $ttl = Config::inst()->get(self::class, 'default_ttl') ?? self::DEFAULT_TTL;
+        $ttl = Config::inst()->get(CacheManager::class, 'default_ttl') ?? CacheManager::DEFAULT_TTL;
 
         // Check provider-specific settings
         if ($provider !== null) {
-            $providerSettings = Config::inst()->get(self::class, 'provider_settings') ?? [];
+            $providerSettings = Config::inst()->get(CacheManager::class, 'provider_settings') ?? [];
             $providerKey = strtolower($provider);
 
             if (
@@ -353,7 +353,7 @@ class CacheManager
 
         // Check endpoint-specific settings (overrides provider settings)
         if ($endpoint !== null) {
-            $endpointSettings = Config::inst()->get(self::class, 'endpoint_settings') ?? [];
+            $endpointSettings = Config::inst()->get(CacheManager::class, 'endpoint_settings') ?? [];
 
             if (
                 isset($endpointSettings[$endpoint]) &&
@@ -373,7 +373,7 @@ class CacheManager
      */
     public static function isStatisticsEnabled(): bool
     {
-        return Config::inst()->get(self::class, 'enable_statistics') === true;
+        return Config::inst()->get(CacheManager::class, 'enable_statistics') === true;
     }
 
     /**
@@ -386,12 +386,12 @@ class CacheManager
      */
     private static function updateCacheStats(string $type, ?string $provider = null, ?string $endpoint = null): void
     {
-        if (!self::isStatisticsEnabled()) {
+        if (!CacheManager::isStatisticsEnabled()) {
             return;
         }
 
         try {
-            $statsCache = self::getStatsCache();
+            $statsCache = CacheManager::getStatsCache();
             $stats = $statsCache->get('stats') ?? [
                 'hits' => 0,
                 'misses' => 0,
@@ -447,12 +447,12 @@ class CacheManager
      */
     public static function getStatistics(): array
     {
-        if (!self::isStatisticsEnabled()) {
+        if (!CacheManager::isStatisticsEnabled()) {
             return ['enabled' => false];
         }
 
         try {
-            $statsCache = self::getStatsCache();
+            $statsCache = CacheManager::getStatsCache();
             $stats = $statsCache->get('stats') ?? [
                 'hits' => 0,
                 'misses' => 0,
@@ -486,12 +486,12 @@ class CacheManager
      */
     public static function resetStatistics(): bool
     {
-        if (!self::isStatisticsEnabled()) {
+        if (!CacheManager::isStatisticsEnabled()) {
             return false;
         }
 
         try {
-            $statsCache = self::getStatsCache();
+            $statsCache = CacheManager::getStatsCache();
             return $statsCache->delete('stats');
         } catch (\Exception $e) {
             return false;
