@@ -40,7 +40,7 @@ class SafetyManager
      */
     public static function addSafetyInstructions(array $messages, ?string $safetyInstruction = null): array
     {
-        $instruction = $safetyInstruction ?? self::$defaultSafetyInstruction;
+        $instruction = $safetyInstruction ?? SafetyManager::$defaultSafetyInstruction;
 
         // Look for an existing system message
         $hasSystem = false;
@@ -74,7 +74,7 @@ class SafetyManager
     {
         $warnings = [];
 
-        foreach (self::$contentWarningPatterns as $type => $pattern) {
+        foreach (SafetyManager::$contentWarningPatterns as $type => $pattern) {
             if (preg_match($pattern, $content)) {
                 $warnings[] = $type;
             }
@@ -113,7 +113,7 @@ class SafetyManager
      */
     public static function setDefaultSafetyInstruction(string $instruction): void
     {
-        self::$defaultSafetyInstruction = $instruction;
+        SafetyManager::$defaultSafetyInstruction = $instruction;
     }
 
     /**
@@ -123,6 +123,6 @@ class SafetyManager
      */
     public static function getDefaultSafetyInstruction(): string
     {
-        return self::$defaultSafetyInstruction;
+        return SafetyManager::$defaultSafetyInstruction;
     }
 }
