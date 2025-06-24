@@ -368,7 +368,7 @@ abstract class AbstractLLMClient implements LLMClientInterface
         $retryManager = Injector::inst()->get(RetryManager::class);
 
         return $retryManager->executeWithRetry(
-            function() use ($payload, $endpoint, $useCache) {
+            function () use ($payload, $endpoint, $useCache) {
                 return $this->chat($payload, $endpoint, $useCache);
             },
             $maxRetries,
@@ -400,7 +400,7 @@ abstract class AbstractLLMClient implements LLMClientInterface
         $retryManager = Injector::inst()->get(RetryManager::class);
 
         $retryManager->executeWithRetry(
-            function() use ($payload, $endpoint, $handler) {
+            function () use ($payload, $endpoint, $handler) {
                 $this->streamChat($payload, $endpoint, $handler);
                 return true; // Return a value for the retry manager
             },

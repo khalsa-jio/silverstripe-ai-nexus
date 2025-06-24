@@ -74,7 +74,7 @@ interface LLMClientInterface
 
     /**
      * Makes an API call with retry logic and exponential backoff
-     * 
+     *
      * @param array $payload
      * @param string $endpoint
      * @param bool $useCache Whether to use the cache (default true)
@@ -85,8 +85,8 @@ interface LLMClientInterface
      * @throws \Exception If all retry attempts fail
      */
     public function chatWithRetry(
-        array $payload, 
-        string $endpoint, 
+        array $payload,
+        string $endpoint,
         bool $useCache = true,
         int $maxRetries = null,
         int $initialBackoff = null,
@@ -95,7 +95,7 @@ interface LLMClientInterface
 
     /**
      * Stream API responses with retry logic and exponential backoff
-     * 
+     *
      * @param array $payload
      * @param string $endpoint
      * @param StreamResponseHandler $handler Handler for stream events
@@ -106,8 +106,8 @@ interface LLMClientInterface
      * @return void
      */
     public function streamChatWithRetry(
-        array $payload, 
-        string $endpoint, 
+        array $payload,
+        string $endpoint,
         StreamResponseHandler $handler,
         int $maxRetries = null,
         int $initialBackoff = null,
